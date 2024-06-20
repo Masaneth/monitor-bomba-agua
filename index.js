@@ -7,6 +7,7 @@ const RTSP_URL = process.env.RTSP_URL
 const SILENCE_DURATION = parseFloat(process.env.SILENCE_DURATION)
 const MIN_VOLUME = process.env.MIN_VOLUME
 const WEBHOOK_BASE_URL = process.env.WEBHOOK_BASE_URL
+
 // Obtener la hora actual ajustada a la zona horaria de Madrid
 function getMadridTime() {
 	const now = new Date()
@@ -47,13 +48,13 @@ function captureAudio() {
 				console.log(
 					`Activación de la bomba de agua detectada en ${start_time}, duración: ${duration} segundos`
 				)
-				// Construir la URL del webhook con los parámetros
-				const webhookURL = `${WEBHOOK_BASE_URL}?fecha=${encodeURIComponent(
-					start_time
-				)}&duracion=${duration}`
-				// Enviar petición GET al webhook utilizando axios
+
+				// Enviar petición POST al webhook utilizando axios
 				axios
-					.get(webhookURL)
+					.post(WEBHOOK_BASE_URL, {
+						fecha: start_time,
+						duracion: duration,
+					})
 					.then((response) => console.log(response.data))
 					.catch((error) => console.error('Error en la petición:', error))
 			}

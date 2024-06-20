@@ -1,4 +1,5 @@
 require('dotenv').config()
+const { execSync } = require('child_process')
 
 // Cargar las variables de entorno
 const rtsp_url = process.env.RTSP_URL
