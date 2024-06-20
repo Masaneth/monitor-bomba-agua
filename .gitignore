@@ -1,0 +1,34 @@
+# Node.js
+node_modules/
+./scripts/
+
+# Next.js
+.next/
+out/
+
+# Archivos de desarrollo
+*.log
+*.pid
+*.lock
+npm-debug.log*
+
+# Carpeta específica de dependencias para el cliente (puede variar según la configuración de tu proyecto)
+/cliente/node_modules/
+
+# Archivos de configuración locales (configuraciones que pueden variar en cada entorno)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Dependiendo de tus herramientas de desarrollo, podrías querer ignorar otros archivos
+# (por ejemplo, archivos generados por tu IDE, archivos de configuración específicos del sistema, etc.)
+
+# Sistema de control de versiones
+.vscode/
+.idea/
+data/
+base-data/
+# Dependiendo de tus herramientas de implementación, puedes querer ignorar archivos de implementación específicos
+# (por ejemplo, Docker, configuración de implementación específica)
