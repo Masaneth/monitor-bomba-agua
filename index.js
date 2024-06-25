@@ -6,25 +6,22 @@ const RTSP_URL = process.env.RTSP_URL
 const MIN_VOLUME = parseFloat(process.env.MIN_VOLUME)
 const WEBHOOK_URL = process.env.WEBHOOK_URL
 const PEAK_DURATION = parseInt(process.env.PEAK_DURATION)
-const OFFLINE_DURATION = 5 * 60 * 1000 // 5 minutos en milisegundos
 
 console.log(`RTSP URL: ${RTSP_URL}`)
 console.log(`Webhook URL: ${WEBHOOK_URL}`)
 console.log(`Peak duration: ${PEAK_DURATION}`)
-console.log(`Volumen minimo: ${MIN_VOLUME}`)
+console.log(`Volumen mínimo: ${MIN_VOLUME}`)
 
 let pumpActive = false
 let activationStartTime = null
 let volumeWindow = []
-let lastDataReceived = Date.now()
 const windowSize = PEAK_DURATION * 10 // Ajustar en función de la frecuencia de muestreo (10 muestras por segundo)
 
 // Función para enviar solicitud al webhook
-const sendWebhook = async (startTime, duration, message = '') => {
+const sendWebhook = async (startTime, duration) => {
 	const data = {
 		fecha: startTime,
 		duracion: duration,
-		mensaje: message,
 	}
 
 	try {
@@ -79,7 +76,6 @@ ffmpeg.stderr.on('data', (data) => {
 
 // Análisis del flujo de audio
 ffmpeg.stdout.on('data', (chunk) => {
-	lastDataReceived = Date.now()
 	const samples = new Int16Array(
 		chunk.buffer.slice(chunk.byteOffset, chunk.byteOffset + chunk.byteLength)
 	)
@@ -92,15 +88,15 @@ ffmpeg.stdout.on('data', (chunk) => {
 
 	const currentTime = new Date()
 
-	// Verificar si el volumen promedio en la ventana está por debajo del volumen mínimo
+	// Verificar si el volumen promedio en la ventana está por encima del volumen mínimo
 	const averageVolume =
 		volumeWindow.reduce((sum, val) => sum + val, 0) / volumeWindow.length
 	//console.log(`Average Volume: ${averageVolume}`);
 
-	if (averageVolume < MIN_VOLUME && !pumpActive) {
+	if (averageVolume >= MIN_VOLUME && !pumpActive) {
 		pumpActive = true
 		activationStartTime = currentTime
-	} else if (averageVolume >= MIN_VOLUME && pumpActive) {
+	} else if (averageVolume < MIN_VOLUME && pumpActive) {
 		pumpActive = false
 		const activationEndTime = currentTime
 		const duration = (activationEndTime - activationStartTime) / 1000 // Duración en segundos
@@ -117,13 +113,3 @@ ffmpeg.stdout.on('data', (chunk) => {
 ffmpeg.on('close', (code) => {
 	console.log(`FFmpeg process exited with code ${code}`)
 })
-
-// Comprobar si el stream está offline
-setInterval(() => {
-	const now = Date.now()
-	if (now - lastDataReceived >= OFFLINE_DURATION) {
-		const offlineTime = formatDateTime(new Date())
-		sendWebhook(offlineTime, 0, 'RTSP stream offline for 5 minutes')
-		console.log(`RTSP stream offline detected at: ${offlineTime}`)
-	}
-}, 60000) // Comprobación cada minuto
