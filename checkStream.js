@@ -1,12 +1,16 @@
 const ffmpeg = require('fluent-ffmpeg')
-const ffmpegPath = require('ffmpeg-static')
 const axios = require('axios')
-
-// Configura el path de ffmpeg
-ffmpeg.setFfmpegPath(ffmpegPath)
+require('dotenv').config() // Asegúrate de cargar las variables de entorno
 
 const rtspUrl = process.env.RTSP_URL // Reemplaza con tu URL RTSP
 const webhookUrl = process.env.WEBHOOK_URL // Reemplaza con tu URL de webhook
+
+if (!rtspUrl || !webhookUrl) {
+	console.error(
+		'RTSP_URL or WEBHOOK_URL is not set in the environment variables'
+	)
+	process.exit(1)
+}
 
 function sendWebhookNotification(message) {
 	axios
@@ -22,13 +26,15 @@ function sendWebhookNotification(message) {
 function checkStream() {
 	ffmpeg(rtspUrl)
 		.inputOptions(['-rtsp_transport tcp'])
+		.outputOptions('-f null') // Formato null para la salida
 		.on('start', () => {
 			console.log(`Checking stream: ${rtspUrl}`)
 		})
 		.on('codecData', () => {
 			console.log('Stream is online')
+			// Aquí puedes agregar lógica adicional si es necesario
 		})
-		.on('error', (err) => {
+		.on('error', (err, stdout, stderr) => {
 			if (
 				err.message.includes('Connection refused') ||
 				err.message.includes('Server returned 404 Not Found')
@@ -42,7 +48,7 @@ function checkStream() {
 		.on('end', () => {
 			console.log('Finished checking stream')
 		})
-		.output('/dev/null') // No necesitamos guardar la salida
+		.output('-') // Especificar una salida dummy
 		.run()
 }
 
